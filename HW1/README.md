@@ -148,7 +148,7 @@ Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (2
 
 What's the version of pip in the image?
 
-* 1) 24.3.1
+##### 1) 24.3.1
 2) 24.2.1
 3) 23.3.1
 4) 23.2.1
@@ -196,7 +196,7 @@ volumes:
     name: vol-pgadmin_data
 ```
 
-* 1) postgres:5433
+##### 1) postgres:5433
 2) localhost:5432
 3) db:5433
 4) postgres:5432
@@ -295,7 +295,7 @@ SQL:
 Answers:
 
 1) 104,802; 197,670; 110,612; 27,831; 35,281
-* 2) 104,802; 198,924; 109,603; 27,678; 35,189
+##### 2) 104,802; 198,924; 109,603; 27,678; 35,189
 3) 104,793; 201,407; 110,612; 27,831; 35,281
 4) 104,793; 202,661; 109,603; 27,678; 35,189
 5) 104,838; 199,013; 109,645; 27,688; 35,202
@@ -311,7 +311,7 @@ SQL: `SELECT DATE(lpep_pickup_datetime) FROM green_taxi_data WHERE trip_distance
 1) 2019-10-11
 2) 2019-10-24
 3) 2019-10-26
-* 4) 2019-10-31
+##### 4) 2019-10-31
 
 ## Question 5. Three biggest pickup zones
 
@@ -339,7 +339,7 @@ SQL: `SELECT "Zone" FROM zones WHERE "LocationID" = '74' OR "LocationID" = '75' 
 | Morningside Heights |
 +---------------------+
 
-* 1) East Harlem North, East Harlem South, Morningside Heights
+##### 1) East Harlem North, East Harlem South, Morningside Heights
 2) East Harlem North, Morningside Heights
 3) Morningside Heights, Astoria Park, East Harlem South
 4) Bedford, East Harlem North, Astoria Park
@@ -377,7 +377,7 @@ SQL: `SELECT "Zone" FROM zones WHERE "LocationID" = '132'`
 +-------------+
 
 1) Yorkville West
-* 2) JFK Airport
+##### 2) JFK Airport
 3) East Harlem North
 4) East Harlem South
 
@@ -403,5 +403,5 @@ Answers:
 1) terraform import, terraform apply -y, terraform destroy
 2) teraform init, terraform plan -auto-apply, terraform rm
 3) terraform init, terraform run -auto-approve, terraform destroy
-* 4) terraform init, terraform apply -auto-approve, terraform destroy
+##### 4) terraform init, terraform apply -auto-approve, terraform destroy
 5) terraform import, terraform apply -y, terraform rm
