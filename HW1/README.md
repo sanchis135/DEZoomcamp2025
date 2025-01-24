@@ -377,7 +377,7 @@ SQL: `SELECT "Zone" FROM zones WHERE "LocationID" = '132'`
 +-------------+
 
 1) Yorkville West
-2) 2) JFK Airport <--
+2) JFK Airport <--
 3) East Harlem North
 4) East Harlem South
 
