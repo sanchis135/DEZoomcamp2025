@@ -223,7 +223,9 @@ Creating docker-compose.yaml
 
 Running the next line in a Git Bash of VSCode:
 
+```bash
 winpty docker run -it -e POSTGRES_USER="root" -e POSTGRES_PASSWORD="root" -e POSTGRES_DB="ny_taxi" -v /c/Users/Sandra/Documents/GitHub/Data_Engineering_Zoomcamp_2025/1_intro/2_docker_sql/ny_taxi_postgres_data:/var/lib/postgresql/data -p 5432:5432 postgres:13
+```
 
 Open other Git Bash window of VSCode.
 
@@ -268,10 +270,9 @@ Running homewrok.ipynb
 pip install sqlalchemy
 pip install psycopg2
 
-Me he quedado en el minuto 22 del video: https://www.youtube.com/watch?v=2JM-ziJt0WI&list=PL3MmuxUbc_hJed7dXYoJw8DoCuVHhGEQb&index=6
-https://itnadigital.notion.site/Ingesting-NY-Taxi-Data-to-Postgres-2459cc3aab36475c8bab5a3a04493f10
-https://github.com/DataTalksClub/data-engineering-zoomcamp/tree/main/01-docker-terraform
-https://docs.google.com/document/d/e/2PACX-1vRJUuGfzgIdbkalPgg2nQ884CnZkCg314T_OBq-_hfcowPxNIA0-z5OtMTDzuzute9VBHMjNYZFTCc1/pub
+In the last Git BAsh, checking again: root@localhost:ny_taxi> `\dt`
+
+And later: `SELECY count(1) FROM green_taxi_data;`
 
 
 ## Question 3. Trip Segmentation Count
@@ -284,10 +285,17 @@ In between 3 (exclusive) and 7 miles (inclusive),
 In between 7 (exclusive) and 10 miles (inclusive),
 Over 10 miles
 
+SQL: 
+1) `SELECT COUNT(*) FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_dropoff_datetime < '2019-11-01' AND trip_distance <= 1.0;`
+2) `SELECT COUNT(*) FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_dropoff_datetime < '2019-11-01' AND trip_distance > 1.0 AND trip_distance <= 3.0;`
+3) `SELECT COUNT(*) FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_dropoff_datetime < '2019-11-01' AND trip_distance > 3.0 AND trip_distance <= 7.0;`
+4) `SELECT COUNT(*) FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_dropoff_datetime < '2019-11-01' AND trip_distance > 7.0 AND trip_distance <= 10.0;`
+5) `SELECT COUNT(*) FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_dropoff_datetime < '2019-11-01' AND trip_distance > 10.0`
+
 Answers:
 
 1) 104,802; 197,670; 110,612; 27,831; 35,281
-2) 104,802; 198,924; 109,603; 27,678; 35,189
+* 2) 104,802; 198,924; 109,603; 27,678; 35,189
 3) 104,793; 201,407; 110,612; 27,831; 35,281
 4) 104,793; 202,661; 109,603; 27,678; 35,189
 5) 104,838; 199,013; 109,645; 27,688; 35,202
@@ -298,10 +306,12 @@ Which was the pick up day with the longest trip distance? Use the pick up time f
 
 Tip: For every day, we only care about one single trip with the longest distance.
 
+SQL: `SELECT DATE(lpep_pickup_datetime) FROM green_taxi_data WHERE trip_distance = (SELECT MAX(trip_distance) FROM green_taxi_data);`
+
 1) 2019-10-11
 2) 2019-10-24
 3) 2019-10-26
-4) 2019-10-31
+* 4) 2019-10-31
 
 ## Question 5. Three biggest pickup zones
 
@@ -309,7 +319,27 @@ Which were the top pickup locations with over 13,000 in total_amount (across all
 
 Consider only lpep_pickup_datetime when filtering by date.
 
-1) East Harlem North, East Harlem South, Morningside Heights
+SQL: `SELECT "PULocationID" FROM green_taxi_data WHERE DATE(lpep_pickup_datetime) = '2019-10-18' GROUP BY "PULocationID" HAVING SUM(total_amount) > 13000.0`
+
++--------------+
+| PULocationID |
+|--------------|
+| 74           |
+| 75           |
+| 166          |
++--------------+
+
+SQL: `SELECT "Zone" FROM zones WHERE "LocationID" = '74' OR "LocationID" = '75' OR "LocationID" = '166';`
+
++---------------------+
+| Zone                |
+|---------------------|
+| East Harlem North   |
+| East Harlem South   |
+| Morningside Heights |
++---------------------+
+
+* 1) East Harlem North, East Harlem South, Morningside Heights
 2) East Harlem North, Morningside Heights
 3) Morningside Heights, Astoria Park, East Harlem South
 4) Bedford, East Harlem North, Astoria Park
@@ -322,8 +352,32 @@ Note: it's tip , not trip
 
 We need the name of the zone, not the ID.
 
+SQL: `SELECT "LocationID" FROM zones WHERE "Zone" = 'East Harlem North'`
+
++------------+
+| LocationID |
+|------------|
+| 74         |
++------------+
+
+SQL: `SELECT "DOLocationID" FROM green_taxi_data WHERE lpep_pickup_datetime >= '2019-10-01' AND lpep_pickup_datetime < '2019-11-01' AND "PULocationID" = '74' ORDER BY "tip_amount" DESC LIMIT 1;`
+
++--------------+
+| DOLocationID |
+|--------------|
+| 132          |
++--------------+
+
+SQL: `SELECT "Zone" FROM zones WHERE "LocationID" = '132'`
+
++-------------+
+| Zone        |
+|-------------|
+| JFK Airport |
++-------------+
+
 1) Yorkville West
-2) JFK Airport
+* 2) JFK Airport
 3) East Harlem North
 4) East Harlem South
 
@@ -334,6 +388,8 @@ In this section homework we'll prepare the environment by creating resources in 
 In your VM on GCP/Laptop/GitHub Codespace install Terraform. Copy the files from the course repo here to your VM/Laptop/GitHub Codespace.
 
 Modify the files as necessary to create a GCP Bucket and Big Query Dataset.
+
+Following this instructions (using Windows): https://github.com/DataTalksClub/data-engineering-zoomcamp/blob/main/01-docker-terraform/1_terraform_gcp/windows.md
 
 ## Question 7. Terraform Workflow
 
@@ -347,5 +403,5 @@ Answers:
 1) terraform import, terraform apply -y, terraform destroy
 2) teraform init, terraform plan -auto-apply, terraform rm
 3) terraform init, terraform run -auto-approve, terraform destroy
-4) terraform init, terraform apply -auto-approve, terraform destroy
+* 4) terraform init, terraform apply -auto-approve, terraform destroy
 5) terraform import, terraform apply -y, terraform rm
