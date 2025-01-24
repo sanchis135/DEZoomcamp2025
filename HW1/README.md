@@ -148,7 +148,7 @@ Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (2
 
 What's the version of pip in the image?
 
-** 1) 24.3.1 **
+** 1) 24.3.1
 2) 24.2.1
 3) 23.3.1
 4) 23.2.1
@@ -196,7 +196,7 @@ volumes:
     name: vol-pgadmin_data
 ```
 
-** 1) postgres:5433 **
+1) postgres:5433 **
 2) localhost:5432
 3) db:5433
 4) postgres:5432
