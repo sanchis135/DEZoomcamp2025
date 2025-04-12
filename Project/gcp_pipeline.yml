@@ -1,0 +1,123 @@
+id: gcp_pipeline
+namespace: project_zoomcamp
+description: This pipeline will execute the entire process from downloading the dataset to loading it into BigQuery.
+
+inputs:
+  - id: url_dataset
+    type: STRING
+    displayName: URL Dataset 
+
+#https://drive.google.com/uc?id=13p-box0F9kou4wE9AyeBNKMSfE767xT-&export=download
+
+variables:
+  file: "organizations-10000.csv" 
+  gcs_file: "gs://{{kv('GCP_BUCKET_NAME')}}/{{vars.file}}"
+  data: "{{ outputs.extract_file.uri }}"
+
+
+tasks:
+
+  - id: extract_file
+    type: io.kestra.plugin.core.http.Download
+    uri: "{{ inputs.url_dataset }}"
+
+  - id: upload_gcs
+    type: io.kestra.plugin.gcp.gcs.Upload
+    from: "{{render(vars.data)}}"
+    to: "{{render(vars.gcs_file)}}"
+    serviceAccount: "{{kv('GCP_CREDS')}}"
+
+  - id: create_gcs_bucket
+    type: io.kestra.plugin.gcp.gcs.CreateBucket
+    ifExists: SKIP
+    storageClass: STANDARD
+    name: "{{kv('GCP_BUCKET_NAME')}}"
+
+  
+  - id: bq_organizations_data
+    type: io.kestra.plugin.gcp.bigquery.Query
+    serviceAccount: "{{kv('GCP_CREDS')}}"
+    projectId: "{{kv('GCP_PROJECT_ID')}}"
+    sql: |
+      CREATE TABLE IF NOT EXISTS `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.organizations_data`
+      (
+        Index INT64 OPTIONS (description = 'Index of the record.'),
+        Organization_Id STRING OPTIONS (description = 'Unique identifier for the organization.'),
+        Name STRING OPTIONS (description = 'Name of the organization.'),
+        Website STRING OPTIONS (description = 'Website of the organization.'),
+        Country STRING OPTIONS (description = 'Country where the organization is located.'),
+        Description STRING OPTIONS (description = 'Description of the organization.'),
+        Founded INT64 OPTIONS (description = 'Year the organization was founded.'),
+        Industry STRING OPTIONS (description = 'Industry in which the organization operates.'),
+        Number_of_employees INT64 OPTIONS (description = 'Number of employees in the organization.')
+      )
+      PARTITION BY RANGE_BUCKET(Founded, GENERATE_ARRAY(1900, 2025, 1))
+      CLUSTER BY Country, Industry
+
+
+  
+  - id: bq_organizations_data_ext
+    type: io.kestra.plugin.gcp.bigquery.Query
+    serviceAccount: "{{kv('GCP_CREDS')}}"
+    projectId: "{{kv('GCP_PROJECT_ID')}}"
+    sql: |
+      CREATE OR REPLACE EXTERNAL TABLE `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.organizations_data_ext`
+      (
+        Index INT64 OPTIONS (description = 'Index of the record.'),
+        Organization_Id STRING OPTIONS (description = 'Unique identifier for the organization.'),
+        Name STRING OPTIONS (description = 'Name of the organization.'),
+        Website STRING OPTIONS (description = 'Website of the organization.'),
+        Country STRING OPTIONS (description = 'Country where the organization is located.'),
+        Description STRING OPTIONS (description = 'Description of the organization.'),
+        Founded INT64 OPTIONS (description = 'Year the organization was founded.'),
+        Industry STRING OPTIONS (description = 'Industry in which the organization operates.'),
+        Number_of_employees INT64 OPTIONS (description = 'Number of employees in the organization.')
+      )
+      OPTIONS (
+        format = 'CSV',
+        uris = ['{{render(vars.gcs_file)}}'],
+        skip_leading_rows = 1
+      );
+
+  
+  - id: merge_into_master
+    type: io.kestra.plugin.gcp.bigquery.Query
+    serviceAccount: "{{kv('GCP_CREDS')}}"
+    projectId: "{{kv('GCP_PROJECT_ID')}}"
+    sql: |
+      MERGE INTO `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.organizations_data` T
+      USING `{{kv('GCP_PROJECT_ID')}}.{{kv('GCP_DATASET')}}.organizations_data_ext` S
+      ON T.Organization_Id = S.Organization_Id
+      WHEN MATCHED AND (
+        T.Name != S.Name OR
+        T.Website != S.Website OR
+        T.Country != S.Country OR
+        T.Description != S.Description OR
+        T.Founded != S.Founded OR
+        T.Industry != S.Industry OR
+        T.Number_of_employees != S.Number_of_employees
+      ) THEN
+        UPDATE SET
+          T.Name = S.Name,
+          T.Website = S.Website,
+          T.Country = S.Country,
+          T.Description = S.Description,
+          T.Founded = S.Founded,
+          T.Industry = S.Industry,
+          T.Number_of_employees = S.Number_of_employees
+        WHEN NOT MATCHED THEN
+          INSERT (Index, Organization_Id, Name, Website, Country, Description, Founded, Industry, Number_of_employees)
+          VALUES (S.Index, S.Organization_Id, S.Name, S.Website, S.Country, S.Description, S.Founded, S.Industry, S.Number_of_employees);
+
+  - id: purge_files
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+    description: If you'd like to explore Kestra outputs, disable it.
+    disabled: false
+
+pluginDefaults:
+  - type: io.kestra.plugin.gcp
+    values:
+      serviceAccount: "{{kv('GCP_CREDS')}}"
+      projectId: "{{kv('GCP_PROJECT_ID')}}"
+      location: "{{kv('GCP_LOCATION')}}"
+      bucket: "{{kv('GCP_BUCKET_NAME')}}"
