@@ -8,7 +8,9 @@ Link: https://drive.google.com/uc?id=13p-box0F9kou4wE9AyeBNKMSfE767xT-&export=do
 
 # Development:
 
-## Step 1: Configuración de la Infraestructura en la Nube (Google Cloud y Terraform)
+![alt text](Pipeline.gif)
+
+## Step 1: Cloud Infrastructure Setup (Google Cloud and Terraform)
 1. Configurate your count of GCP
 Create a count in Google Cloud Platform (GCP).
 Configure a new project in GCP:
